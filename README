@@ -1,0 +1,6 @@
+DAVsploit
+=========
+
+DAVsploit is an automated exploit pack created to pentest WebDAV enabled 
+    
+IIS server(s) by performing remote authentication attacks
